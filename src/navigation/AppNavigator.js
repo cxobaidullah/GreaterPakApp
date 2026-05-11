@@ -25,10 +25,18 @@ const AppNavigator = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
-        {mode === 'authenticated' || mode === 'guest' ? (
+        {mode === 'authenticated' ? (
           <>
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen name="NewsList" component={NewsListScreen} />
+            <Stack.Screen name="NewsDetail" component={NewsDetailScreen} />
+            <Stack.Screen name="PressList" component={PressListScreen} />
+            <Stack.Screen name="PressDetail" component={PressDetailScreen} />
+          </>
+        ) : mode === 'guest' ? (
+          <>
+            <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="NewsList" component={NewsListScreen} />
             <Stack.Screen name="NewsDetail" component={NewsDetailScreen} />
             <Stack.Screen name="PressList" component={PressListScreen} />
