@@ -39,6 +39,10 @@ const HomeScreen = ({ navigation }) => {
       setLockedVisible(true);
       return;
     }
+    if (feature.id === 'news') {
+      navigation.navigate('NewsList');
+      return;
+    }
     Alert.alert(feature.title, 'Coming soon');
   };
 

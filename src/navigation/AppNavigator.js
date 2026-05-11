@@ -6,6 +6,8 @@ import LoginScreen from '../screens/LoginScreen';
 import RoleSelectScreen from '../screens/RoleSelectScreen';
 import SignupScreen from '../screens/SignupScreen';
 import HomeScreen from '../screens/HomeScreen';
+import NewsListScreen from '../screens/NewsListScreen';
+import NewsDetailScreen from '../screens/NewsDetailScreen';
 import colors from '../config/colors';
 
 const Stack = createNativeStackNavigator();
@@ -23,6 +25,8 @@ const AppNavigator = () => {
         {mode === 'authenticated' || mode === 'guest' ? (
           <>
             <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="NewsList" component={NewsListScreen} />
+            <Stack.Screen name="NewsDetail" component={NewsDetailScreen} />
             <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
           </>
