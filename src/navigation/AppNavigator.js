@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthContext } from '../contexts/AuthContext';
 import LoginScreen from '../screens/LoginScreen';
+import RoleSelectScreen from '../screens/RoleSelectScreen';
 import SignupScreen from '../screens/SignupScreen';
 import HomeScreen from '../screens/HomeScreen';
 import colors from '../config/colors';
@@ -20,10 +21,15 @@ const AppNavigator = () => {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
         {mode === 'authenticated' || mode === 'guest' ? (
-          <Stack.Screen name="Home" component={HomeScreen} />
+          <>
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
+            <Stack.Screen name="Signup" component={SignupScreen} />
+          </>
         ) : (
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
           </>
         )}

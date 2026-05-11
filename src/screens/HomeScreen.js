@@ -1,75 +1,275 @@
-import React, { useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useContext, useMemo, useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AuthContext } from '../contexts/AuthContext';
+import FeatureTile from '../components/FeatureTile';
+import MemberExclusiveModal from '../components/MemberExclusiveModal';
 import theme from '../config/theme';
 
-const HomeScreen = () => {
+const FEATURES = [
+  { id: 'manifesto', title: 'Review Manifesto', icon: 'file-document-outline', tint: '#FEF3C7', memberOnly: false },
+  { id: 'vision', title: 'Vision & Mission', icon: 'eye-outline', tint: '#CFFAFE', memberOnly: false },
+  { id: 'news', title: 'Read News', icon: 'newspaper-variant-outline', tint: '#E0F2FE', memberOnly: false },
+  { id: 'press', title: 'Press Conferences', icon: 'microphone', tint: '#FEE2E2', memberOnly: false, accent: true },
+  { id: 'events', title: 'Explore Events', icon: 'calendar-month-outline', tint: '#DCFCE7', memberOnly: false },
+  { id: 'party-structure', title: 'Party Structure', icon: 'sitemap-outline', tint: '#F1F5F9', memberOnly: true },
+];
+
+const HomeScreen = ({ navigation }) => {
   const { user, mode, signOut } = useContext(AuthContext);
+  const [lockedVisible, setLockedVisible] = useState(false);
+
+  const isGuest = mode === 'guest';
+  const isApprovedMember = user?.role === 'member' && user?.membershipStatus === 'approved';
+  const isPending = user?.membershipStatus === 'pending';
+  const isRejected = user?.membershipStatus === 'rejected';
+
+  const badge = useMemo(() => {
+    if (isGuest) return { label: 'GUEST MODE', tone: 'muted' };
+    if (isApprovedMember) return { label: 'MEMBER', tone: 'success' };
+    if (isPending) return { label: 'MEMBER · PENDING', tone: 'warn' };
+    if (isRejected) return { label: 'SUPPORTER', tone: 'muted' };
+    return { label: 'SUPPORTER', tone: 'muted' };
+  }, [isGuest, isApprovedMember, isPending, isRejected]);
+
+  const avatarLetter = isGuest ? 'G' : (user?.fullName?.[0] || 'S').toUpperCase();
+
+  const handleTilePress = (feature) => {
+    if (feature.memberOnly && !isApprovedMember) {
+      setLockedVisible(true);
+      return;
+    }
+    Alert.alert(feature.title, 'Coming soon');
+  };
+
+  const handleJoinGP = () => {
+    setLockedVisible(false);
+    if (isGuest) {
+      navigation.navigate('RoleSelect');
+    } else if (isPending) {
+      Alert.alert('Application Pending', 'Your member application is already under review.');
+    } else {
+      navigation.navigate('Signup', { role: 'member' });
+    }
+  };
+
+  const handleExit = () => {
+    Alert.alert(
+      isGuest ? 'Exit Guest Mode' : 'Log Out',
+      isGuest ? 'Leave guest mode and return to login?' : 'Sign out of your account?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Yes', style: 'destructive', onPress: () => signOut() },
+      ],
+    );
+  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.welcome}>Welcome to Greater Pakistan</Text>
-        <Text style={styles.description}>
-          {mode === 'guest'
-            ? 'You are in guest mode. Browse public news and press updates with limited access.'
-            : `Signed in as ${user?.fullName ?? 'member'}. Access your feed, updates, and premium content.`}
-        </Text>
-        {user?.role ? (
-          <Text style={styles.meta}>Role: {user.role}</Text>
-        ) : null}
-        <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
-          <Text style={styles.logoutButtonText}>LOG OUT</Text>
+    <View style={styles.page}>
+      <View style={styles.header}>
+        <View style={[styles.avatar, isGuest && styles.avatarGuest]}>
+          <Text style={styles.avatarLetter}>{avatarLetter}</Text>
+        </View>
+
+        <View style={[styles.badge, styles[`badge_${badge.tone}`]]}>
+          <Text style={[styles.badgeText, styles[`badgeText_${badge.tone}`]]}>{badge.label}</Text>
+        </View>
+
+        <TouchableOpacity style={styles.exitButton} onPress={handleExit}>
+          <Text style={styles.exitText}>{isGuest ? 'Exit Guest' : 'Log Out'}</Text>
         </TouchableOpacity>
       </View>
+
+      {isPending ? (
+        <View style={styles.pendingBanner}>
+          <MaterialCommunityIcons name="clock-outline" size={18} color={theme.colors.notification} />
+          <Text style={styles.pendingText}>
+            Your member application is under review. An admin will approve it shortly.
+          </Text>
+        </View>
+      ) : null}
+
+      {isApprovedMember && user?.referralCode ? (
+        <View style={styles.referralBanner}>
+          <MaterialCommunityIcons name="ticket-confirmation-outline" size={18} color={theme.colors.success} />
+          <Text style={styles.referralText}>
+            Your referral code: <Text style={styles.referralCode}>{user.referralCode}</Text>
+            {'  '}·{'  '}
+            <Text style={styles.referralCount}>{user.referralCount || 0}</Text> referrals
+          </Text>
+        </View>
+      ) : null}
+
+      <ScrollView contentContainerStyle={styles.grid}>
+        <View style={styles.welcome}>
+          <Text style={styles.welcomeTitle}>
+            {isGuest ? 'Welcome, Guest' : `Welcome, ${user?.fullName?.split(' ')[0] || 'friend'}`}
+          </Text>
+          <Text style={styles.welcomeSubtitle}>
+            {isApprovedMember
+              ? 'Full member access. Explore all features below.'
+              : 'Explore public content. Member-only features are locked.'}
+          </Text>
+        </View>
+
+        <View style={styles.gridRows}>
+          {FEATURES.reduce((rows, feature, i) => {
+            if (i % 2 === 0) rows.push([feature]);
+            else rows[rows.length - 1].push(feature);
+            return rows;
+          }, []).map((row, rowIdx) => (
+            <View key={rowIdx} style={styles.row}>
+              {row.map((feature) => (
+                <FeatureTile
+                  key={feature.id}
+                  title={feature.title}
+                  icon={feature.icon}
+                  tint={feature.tint}
+                  accent={feature.accent}
+                  locked={feature.memberOnly && !isApprovedMember}
+                  onPress={() => handleTilePress(feature)}
+                />
+              ))}
+              {row.length === 1 ? <View style={{ flex: 1 }} /> : null}
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+
+      <MemberExclusiveModal
+        visible={lockedVisible}
+        onClose={() => setLockedVisible(false)}
+        onJoin={handleJoinGP}
+        ctaLabel={isPending ? 'Application Pending' : 'Join GP Now'}
+        subtitle={
+          isPending
+            ? 'Your member application is under review. You will gain access once an admin approves it.'
+            : undefined
+        }
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  page: {
     flex: 1,
-    padding: theme.spacing.lg,
     backgroundColor: theme.colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.xl,
+    paddingBottom: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  card: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.card,
+  avatarGuest: {
+    backgroundColor: theme.colors.success,
+  },
+  avatarLetter: {
+    color: theme.colors.surface,
+    fontWeight: theme.fontWeight.bold,
+    fontSize: theme.fontSize.label,
+  },
+  badge: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#E2E8F0',
+  },
+  badge_muted: { backgroundColor: '#E2E8F0' },
+  badge_success: { backgroundColor: '#DCFCE7' },
+  badge_warn: { backgroundColor: '#FEF3C7' },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: theme.fontWeight.bold,
+    letterSpacing: 1,
+  },
+  badgeText_muted: { color: theme.colors.textMedium },
+  badgeText_success: { color: theme.colors.success },
+  badgeText_warn: { color: '#92400E' },
+  exitButton: {
+    marginLeft: 'auto',
+    paddingVertical: 8,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.radius.button,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  exitText: {
+    fontSize: theme.fontSize.small,
+    color: theme.colors.textHigh,
+    fontWeight: theme.fontWeight.semi,
+  },
+  pendingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    marginHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radius.small,
+    gap: 8,
+  },
+  pendingText: {
+    flex: 1,
+    color: '#92400E',
+    fontSize: theme.fontSize.small,
+    lineHeight: 18,
+  },
+  referralBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DCFCE7',
+    marginHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radius.small,
+    gap: 8,
+  },
+  referralText: {
+    color: '#166534',
+    fontSize: theme.fontSize.small,
+  },
+  referralCode: {
+    fontWeight: theme.fontWeight.bold,
+    letterSpacing: 1,
+  },
+  referralCount: {
+    fontWeight: theme.fontWeight.bold,
+  },
+  grid: {
     padding: theme.spacing.lg,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
+    paddingBottom: theme.spacing.xl,
   },
   welcome: {
+    marginBottom: theme.spacing.md,
+  },
+  welcomeTitle: {
     fontSize: theme.fontSize.title,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.textHigh,
-    marginBottom: theme.spacing.sm,
   },
-  description: {
-    fontSize: theme.fontSize.body,
+  welcomeSubtitle: {
+    marginTop: 4,
+    fontSize: theme.fontSize.small,
     color: theme.colors.textMedium,
-    lineHeight: 22,
-    marginBottom: theme.spacing.md,
   },
-  meta: {
-    fontSize: theme.fontSize.label,
-    color: theme.colors.textLow,
-    marginBottom: theme.spacing.lg,
+  gridRows: {
+    gap: theme.spacing.md,
   },
-  logoutButton: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.radius.button,
-    paddingVertical: theme.spacing.md,
-    alignItems: 'center',
-  },
-  logoutButtonText: {
-    color: theme.colors.surface,
-    fontSize: theme.fontSize.label,
-    fontWeight: theme.fontWeight.bold,
+  row: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
   },
 });
 

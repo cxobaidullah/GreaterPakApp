@@ -4,13 +4,18 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { AuthContext } from '../contexts/AuthContext';
 import theme from '../config/theme';
 
-const SignupScreen = ({ navigation }) => {
+const SignupScreen = ({ navigation, route }) => {
+  const role = route?.params?.role === 'member' ? 'member' : 'supporter';
+  const isMember = role === 'member';
+
   const { signUp } = useContext(AuthContext);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
   const [province, setProvince] = useState('');
+  const [district, setDistrict] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -18,6 +23,10 @@ const SignupScreen = ({ navigation }) => {
   const handleSignup = async () => {
     if (!fullName || !email || !phone || !city || !province || !password) {
       setError('Please complete all registration fields.');
+      return;
+    }
+    if (isMember && !district) {
+      setError('District is required for member registration.');
       return;
     }
     if (password.length < 8) {
@@ -29,7 +38,14 @@ const SignupScreen = ({ navigation }) => {
     setError('');
 
     try {
-      await signUp({ fullName, email, phone, city, province, password });
+      const payload = { fullName, email, phone, city, province, password, role };
+      if (isMember) {
+        payload.district = district;
+        if (referralCode.trim()) {
+          payload.referralCode = referralCode.trim().toUpperCase();
+        }
+      }
+      await signUp(payload);
     } catch (err) {
       setError(err?.toString() || 'Unable to create account.');
     } finally {
@@ -41,8 +57,12 @@ const SignupScreen = ({ navigation }) => {
     <KeyboardAvoidingView style={styles.page} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Text style={styles.title}>CREATE ACCOUNT</Text>
-          <Text style={styles.subtitle}>Register to access news, press updates, and member-only content.</Text>
+          <Text style={styles.title}>{isMember ? 'JOIN AS MEMBER' : 'JOIN AS SUPPORTER'}</Text>
+          <Text style={styles.subtitle}>
+            {isMember
+              ? 'Submit your member application. An admin will review it before unlocking member-only features.'
+              : 'Browse news, press conferences, events, and the party manifesto as a supporter.'}
+          </Text>
         </View>
 
         <View style={styles.card}>
@@ -83,6 +103,27 @@ const SignupScreen = ({ navigation }) => {
             <TextInput style={styles.input} value={province} onChangeText={setProvince} placeholder="Province" placeholderTextColor={theme.colors.textLow} />
           </View>
 
+          {isMember ? (
+            <>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>District</Text>
+                <TextInput style={styles.input} value={district} onChangeText={setDistrict} placeholder="District" placeholderTextColor={theme.colors.textLow} />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Referral Code (optional)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={referralCode}
+                  onChangeText={setReferralCode}
+                  autoCapitalize="characters"
+                  placeholder="If you were invited by a member"
+                  placeholderTextColor={theme.colors.textLow}
+                />
+              </View>
+            </>
+          ) : null}
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
             <TextInput style={styles.input} value={password} onChangeText={setPassword} secureTextEntry placeholder="Create a password" placeholderTextColor={theme.colors.textLow} />
@@ -91,7 +132,9 @@ const SignupScreen = ({ navigation }) => {
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <TouchableOpacity style={styles.primaryButton} onPress={handleSignup} disabled={loading}>
-            <Text style={styles.primaryButtonText}>{loading ? 'Registering...' : 'SIGN UP'}</Text>
+            <Text style={styles.primaryButtonText}>
+              {loading ? 'Submitting...' : isMember ? 'SUBMIT APPLICATION' : 'SIGN UP'}
+            </Text>
           </TouchableOpacity>
 
           <View style={styles.bottomRow}>

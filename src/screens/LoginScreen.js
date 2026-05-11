@@ -98,7 +98,7 @@ const LoginScreen = ({ navigation }) => {
 
           <View style={styles.bottomRow}>
             <Text style={styles.bottomText}>Don't have an account?</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+            <TouchableOpacity onPress={() => navigation.navigate('RoleSelect')}>
               <Text style={styles.bottomLink}>Join the Struggle</Text>
             </TouchableOpacity>
           </View>
