@@ -86,11 +86,9 @@ const HomeScreen = ({ navigation }) => {
   const handleJoinGP = () => {
     setLockedVisible(false);
     if (isGuest) {
-      navigation.navigate('RoleSelect');
-    } else if (isPending) {
-      Alert.alert('Application Pending', 'Your member application is already under review.');
-    } else {
       navigation.navigate('Signup', { role: 'member' });
+    } else {
+      navigation.navigate('Profile');
     }
   };
 
@@ -196,11 +194,15 @@ const HomeScreen = ({ navigation }) => {
         visible={lockedVisible}
         onClose={() => setLockedVisible(false)}
         onJoin={handleJoinGP}
-        ctaLabel={isPending ? 'Application Pending' : 'Join GP Now'}
+        ctaLabel={
+          isGuest ? 'Join GP Now' : isPending ? 'View My Application' : 'Become a Member'
+        }
         subtitle={
           isPending
             ? 'Your member application is under review. You will gain access once an admin approves it.'
-            : undefined
+            : isGuest
+              ? undefined
+              : 'This feature is reserved for approved members. Submit your member application from your profile to unlock.'
         }
       />
     </View>
