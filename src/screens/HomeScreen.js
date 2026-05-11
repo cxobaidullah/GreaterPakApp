@@ -60,6 +60,10 @@ const HomeScreen = ({ navigation }) => {
       navigation.navigate('NewsList');
       return;
     }
+    if (feature.id === 'press') {
+      navigation.navigate('PressList');
+      return;
+    }
     Alert.alert(feature.title, 'Coming soon');
   };
 

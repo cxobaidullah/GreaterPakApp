@@ -8,6 +8,8 @@ import SignupScreen from '../screens/SignupScreen';
 import HomeScreen from '../screens/HomeScreen';
 import NewsListScreen from '../screens/NewsListScreen';
 import NewsDetailScreen from '../screens/NewsDetailScreen';
+import PressListScreen from '../screens/PressListScreen';
+import PressDetailScreen from '../screens/PressDetailScreen';
 import colors from '../config/colors';
 
 const Stack = createNativeStackNavigator();
@@ -27,6 +29,8 @@ const AppNavigator = () => {
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="NewsList" component={NewsListScreen} />
             <Stack.Screen name="NewsDetail" component={NewsDetailScreen} />
+            <Stack.Screen name="PressList" component={PressListScreen} />
+            <Stack.Screen name="PressDetail" component={PressDetailScreen} />
             <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
           </>
