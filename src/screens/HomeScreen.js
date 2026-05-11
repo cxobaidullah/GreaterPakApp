@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, RefreshControl } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, RefreshControl, Share } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import { AuthContext } from '../contexts/AuthContext';
@@ -37,6 +37,22 @@ const HomeScreen = ({ navigation }) => {
     await refreshProfile();
     setRefreshing(false);
   }, [mode, refreshProfile]);
+
+  const handleShareReferral = useCallback(async () => {
+    if (!user?.referralCode) return;
+    try {
+      await Share.share({
+        message: `Join Greater Pakistan with my referral code: ${user.referralCode}\n\nDownload the GP app and use this code when registering as a member.`,
+      });
+    } catch (err) {
+      // User dismissed the sheet or sharing isn't available — no-op.
+    }
+  }, [user?.referralCode]);
+
+  const goToProfile = useCallback(() => {
+    if (mode !== 'authenticated') return;
+    navigation.navigate('Profile');
+  }, [mode, navigation]);
   const isApprovedMember = user?.role === 'member' && user?.membershipStatus === 'approved';
   const isPending = user?.membershipStatus === 'pending';
   const isRejected = user?.membershipStatus === 'rejected';
@@ -92,9 +108,14 @@ const HomeScreen = ({ navigation }) => {
   return (
     <View style={styles.page}>
       <View style={styles.header}>
-        <View style={[styles.avatar, isGuest && styles.avatarGuest]}>
+        <TouchableOpacity
+          style={[styles.avatar, isGuest && styles.avatarGuest]}
+          onPress={goToProfile}
+          disabled={isGuest}
+          activeOpacity={0.7}
+        >
           <Text style={styles.avatarLetter}>{avatarLetter}</Text>
-        </View>
+        </TouchableOpacity>
 
         <View style={[styles.badge, styles[`badge_${badge.tone}`]]}>
           <Text style={[styles.badgeText, styles[`badgeText_${badge.tone}`]]}>{badge.label}</Text>
@@ -122,6 +143,9 @@ const HomeScreen = ({ navigation }) => {
             {'  '}·{'  '}
             <Text style={styles.referralCount}>{user.referralCount || 0}</Text> referrals
           </Text>
+          <TouchableOpacity onPress={handleShareReferral} style={styles.shareButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <MaterialCommunityIcons name="share-variant" size={18} color={theme.colors.success} />
+          </TouchableOpacity>
         </View>
       ) : null}
 
@@ -269,8 +293,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   referralText: {
+    flex: 1,
     color: '#166534',
     fontSize: theme.fontSize.small,
+  },
+  shareButton: {
+    marginLeft: 6,
+    padding: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(22,101,52,0.08)',
   },
   referralCode: {
     fontWeight: theme.fontWeight.bold,

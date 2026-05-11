@@ -6,6 +6,8 @@ import {
   continueAsGuest as apiContinueAsGuest,
   restoreSession,
   fetchProfile,
+  updateProfile as apiUpdateProfile,
+  applyForMembership as apiApplyForMembership,
 } from '../services/authService';
 
 export const AuthContext = createContext({
@@ -32,6 +34,18 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       return null;
     }
+  }, []);
+
+  const updateProfile = useCallback(async (updates) => {
+    const fresh = await apiUpdateProfile(updates);
+    setUser(fresh);
+    return fresh;
+  }, []);
+
+  const applyForMembership = useCallback(async (payload) => {
+    const { user: fresh, application } = await apiApplyForMembership(payload);
+    setUser(fresh);
+    return { user: fresh, application };
   }, []);
 
   useEffect(() => {
@@ -84,7 +98,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, mode, loading, signIn, signUp, signOut, continueAsGuest, refreshProfile }}>
+    <AuthContext.Provider value={{ user, mode, loading, signIn, signUp, signOut, continueAsGuest, refreshProfile, updateProfile, applyForMembership }}>
       {children}
     </AuthContext.Provider>
   );
