@@ -1,5 +1,12 @@
-import React, { createContext, useEffect, useState } from 'react';
-import { login as apiLogin, register as apiRegister, logout as apiLogout, continueAsGuest as apiContinueAsGuest, restoreSession, } from '../services/authService';
+import React, { createContext, useCallback, useEffect, useState } from 'react';
+import {
+  login as apiLogin,
+  register as apiRegister,
+  logout as apiLogout,
+  continueAsGuest as apiContinueAsGuest,
+  restoreSession,
+  fetchProfile,
+} from '../services/authService';
 
 export const AuthContext = createContext({
   user: null,
@@ -9,12 +16,23 @@ export const AuthContext = createContext({
   signUp: async () => {},
   signOut: async () => {},
   continueAsGuest: async () => {},
+  refreshProfile: async () => {},
 });
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [mode, setMode] = useState('signedOut');
   const [loading, setLoading] = useState(true);
+
+  const refreshProfile = useCallback(async () => {
+    try {
+      const fresh = await fetchProfile();
+      setUser(fresh);
+      return fresh;
+    } catch (err) {
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -24,6 +42,7 @@ export const AuthProvider = ({ children }) => {
       if (session.token) {
         setUser(session.user);
         setMode('authenticated');
+        refreshProfile();
       } else if (session.mode === 'guest') {
         setUser(null);
         setMode('guest');
@@ -36,7 +55,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-  }, []);
+  }, [refreshProfile]);
 
   const signIn = async (credentials) => {
     const { token, user: authUser } = await apiLogin(credentials);
@@ -65,7 +84,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, mode, loading, signIn, signUp, signOut, continueAsGuest }}>
+    <AuthContext.Provider value={{ user, mode, loading, signIn, signUp, signOut, continueAsGuest, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

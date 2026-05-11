@@ -48,3 +48,10 @@ export const restoreSession = async () => {
   const user = await getUser();
   return { token, mode, user };
 };
+
+export const fetchProfile = async () => {
+  const response = await apiClient.get('/auth/profile');
+  const user = response.data.data.user;
+  await saveUser(user);
+  return user;
+};

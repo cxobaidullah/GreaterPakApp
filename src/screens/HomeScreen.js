@@ -1,6 +1,7 @@
-import React, { useContext, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, RefreshControl } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useFocusEffect } from '@react-navigation/native';
 import { AuthContext } from '../contexts/AuthContext';
 import FeatureTile from '../components/FeatureTile';
 import MemberExclusiveModal from '../components/MemberExclusiveModal';
@@ -16,10 +17,26 @@ const FEATURES = [
 ];
 
 const HomeScreen = ({ navigation }) => {
-  const { user, mode, signOut } = useContext(AuthContext);
+  const { user, mode, signOut, refreshProfile } = useContext(AuthContext);
   const [lockedVisible, setLockedVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const isGuest = mode === 'guest';
+
+  useFocusEffect(
+    useCallback(() => {
+      if (mode === 'authenticated') {
+        refreshProfile();
+      }
+    }, [mode, refreshProfile]),
+  );
+
+  const onRefresh = useCallback(async () => {
+    if (mode !== 'authenticated') return;
+    setRefreshing(true);
+    await refreshProfile();
+    setRefreshing(false);
+  }, [mode, refreshProfile]);
   const isApprovedMember = user?.role === 'member' && user?.membershipStatus === 'approved';
   const isPending = user?.membershipStatus === 'pending';
   const isRejected = user?.membershipStatus === 'rejected';
@@ -104,7 +121,14 @@ const HomeScreen = ({ navigation }) => {
         </View>
       ) : null}
 
-      <ScrollView contentContainerStyle={styles.grid}>
+      <ScrollView
+        contentContainerStyle={styles.grid}
+        refreshControl={
+          mode === 'authenticated' ? (
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
+          ) : undefined
+        }
+      >
         <View style={styles.welcome}>
           <Text style={styles.welcomeTitle}>
             {isGuest ? 'Welcome, Guest' : `Welcome, ${user?.fullName?.split(' ')[0] || 'friend'}`}
