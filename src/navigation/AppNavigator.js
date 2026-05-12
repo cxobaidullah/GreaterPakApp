@@ -13,6 +13,7 @@ import PressListScreen from '../screens/PressListScreen';
 import PressDetailScreen from '../screens/PressDetailScreen';
 import EventListScreen from '../screens/EventListScreen';
 import EventDetailScreen from '../screens/EventDetailScreen';
+import ContentPageScreen from '../screens/ContentPageScreen';
 import colors from '../config/colors';
 
 const Stack = createNativeStackNavigator();
@@ -37,6 +38,7 @@ const AppNavigator = () => {
             <Stack.Screen name="PressDetail" component={PressDetailScreen} />
             <Stack.Screen name="EventList" component={EventListScreen} />
             <Stack.Screen name="EventDetail" component={EventDetailScreen} />
+            <Stack.Screen name="ContentPage" component={ContentPageScreen} />
           </>
         ) : mode === 'guest' ? (
           <>
@@ -47,6 +49,7 @@ const AppNavigator = () => {
             <Stack.Screen name="PressDetail" component={PressDetailScreen} />
             <Stack.Screen name="EventList" component={EventListScreen} />
             <Stack.Screen name="EventDetail" component={EventDetailScreen} />
+            <Stack.Screen name="ContentPage" component={ContentPageScreen} />
             <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
           </>

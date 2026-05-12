@@ -84,6 +84,14 @@ const HomeScreen = ({ navigation }) => {
       navigation.navigate('EventList');
       return;
     }
+    if (feature.id === 'manifesto') {
+      navigation.navigate('ContentPage', { slug: 'manifesto', fallbackTitle: 'Manifesto' });
+      return;
+    }
+    if (feature.id === 'vision') {
+      navigation.navigate('ContentPage', { slug: 'vision-mission', fallbackTitle: 'Vision & Mission' });
+      return;
+    }
     Alert.alert(feature.title, 'Coming soon');
   };
 
