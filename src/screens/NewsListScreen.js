@@ -20,32 +20,48 @@ const formatDate = (iso) => {
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
+const PAGE_LIMIT = 15;
+
 const NewsListScreen = ({ navigation }) => {
   const [items, setItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
-  const load = useCallback(async () => {
+  const load = useCallback(async ({ pageToLoad = 1, append = false } = {}) => {
     try {
       setError('');
-      const data = await fetchNewsList({ limit: 30 });
-      setItems(data.items || []);
+      const data = await fetchNewsList({ page: pageToLoad, limit: PAGE_LIMIT });
+      const fetched = data.items || [];
+      setItems((current) => (append ? [...current, ...fetched] : fetched));
+      setTotal(data.total || 0);
+      setPage(pageToLoad);
     } catch (err) {
       setError(err?.toString() || 'Unable to load news.');
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
   }, []);
 
   useEffect(() => {
-    load();
+    load({ pageToLoad: 1, append: false });
   }, [load]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    load();
+    load({ pageToLoad: 1, append: false });
+  };
+
+  const onEndReached = () => {
+    if (loading || loadingMore || refreshing) return;
+    if (items.length >= total) return;
+    setLoadingMore(true);
+    load({ pageToLoad: page + 1, append: true });
   };
 
   const renderItem = ({ item }) => (
@@ -112,7 +128,18 @@ const NewsListScreen = ({ navigation }) => {
           keyExtractor={(item) => item._id}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.4}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={styles.footerLoader}>
+                <ActivityIndicator color={theme.colors.primary} />
+              </View>
+            ) : items.length >= total && items.length > 0 ? (
+              <Text style={styles.footerEnd}>You've reached the end.</Text>
+            ) : null
+          }
         />
       )}
     </View>
@@ -222,6 +249,16 @@ const styles = StyleSheet.create({
   emptyText: {
     marginTop: theme.spacing.sm,
     color: theme.colors.textMedium,
+  },
+  footerLoader: {
+    paddingVertical: theme.spacing.md,
+    alignItems: 'center',
+  },
+  footerEnd: {
+    paddingVertical: theme.spacing.md,
+    textAlign: 'center',
+    color: theme.colors.textLow,
+    fontSize: 12,
   },
 });
 
