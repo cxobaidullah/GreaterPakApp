@@ -1,0 +1,190 @@
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  RefreshControl,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { fetchEventsList } from '../services/eventService';
+import theme from '../config/theme';
+
+const formatDate = (iso) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+const EventListScreen = ({ navigation }) => {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    try {
+      setError('');
+      const data = await fetchEventsList({ limit: 30 });
+      setItems(data.items || []);
+    } catch (err) {
+      setError(err?.toString() || 'Unable to load events.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    load();
+  };
+
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.85}
+      onPress={() => navigation.navigate('EventDetail', { id: item._id, title: item.title })}
+    >
+      {item.imageUrl ? (
+        <Image source={{ uri: item.imageUrl }} style={styles.image} />
+      ) : (
+        <View style={[styles.image, styles.imagePlaceholder]}>
+          <MaterialCommunityIcons name="calendar-month-outline" size={36} color={theme.colors.textLow} />
+        </View>
+      )}
+      <View style={styles.cardBody}>
+        <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+        {item.description ? (
+          <Text style={styles.cardSummary} numberOfLines={2}>{item.description}</Text>
+        ) : null}
+        <View style={styles.cardMeta}>
+          <MaterialCommunityIcons name="calendar-blank-outline" size={14} color={theme.colors.textLow} />
+          <Text style={styles.cardMetaText}>{formatDate(item.startDate)}</Text>
+          {item.location ? (
+            <>
+              <View style={styles.dot} />
+              <MaterialCommunityIcons name="map-marker-outline" size={14} color={theme.colors.textLow} />
+              <Text style={styles.cardMetaText} numberOfLines={1}>{item.location}</Text>
+            </>
+          ) : null}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.page}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <MaterialCommunityIcons name="chevron-left" size={28} color={theme.colors.textHigh} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Events</Text>
+        <View style={{ width: 28 }} />
+      </View>
+
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator color={theme.colors.primary} />
+        </View>
+      ) : error ? (
+        <View style={styles.center}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={load}>
+            <Text style={styles.retryText}>Try again</Text>
+          </TouchableOpacity>
+        </View>
+      ) : items.length === 0 ? (
+        <View style={styles.center}>
+          <MaterialCommunityIcons name="calendar-remove" size={48} color={theme.colors.textLow} />
+          <Text style={styles.emptyText}>No events yet.</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={items}
+          keyExtractor={(item) => item._id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.list}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+        />
+      )}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  page: { flex: 1, backgroundColor: theme.colors.background },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: theme.spacing.xl,
+    paddingBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    justifyContent: 'space-between',
+  },
+  backBtn: { padding: 4 },
+  headerTitle: {
+    fontSize: theme.fontSize.subtitle,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.textHigh,
+  },
+  list: { padding: theme.spacing.lg, paddingTop: theme.spacing.sm },
+  card: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.card,
+    marginBottom: theme.spacing.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+  image: {
+    width: '100%',
+    height: 180,
+    backgroundColor: theme.colors.background,
+  },
+  imagePlaceholder: { alignItems: 'center', justifyContent: 'center' },
+  cardBody: { padding: theme.spacing.md },
+  cardTitle: {
+    fontSize: theme.fontSize.label,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.textHigh,
+    marginBottom: 6,
+  },
+  cardSummary: {
+    fontSize: theme.fontSize.small,
+    color: theme.colors.textMedium,
+    lineHeight: 18,
+    marginBottom: theme.spacing.sm,
+  },
+  cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  cardMetaText: { fontSize: 12, color: theme.colors.textLow, marginLeft: 4 },
+  dot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: theme.colors.textLow, marginHorizontal: 6 },
+  center: {
+    flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: theme.spacing.lg,
+  },
+  errorText: { color: theme.colors.error, textAlign: 'center', marginBottom: theme.spacing.md },
+  retryBtn: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radius.button,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+  },
+  retryText: { color: theme.colors.primary, fontWeight: theme.fontWeight.semi },
+  emptyText: { marginTop: theme.spacing.sm, color: theme.colors.textMedium },
+});
+
+export default EventListScreen;

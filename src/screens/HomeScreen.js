@@ -80,6 +80,10 @@ const HomeScreen = ({ navigation }) => {
       navigation.navigate('PressList');
       return;
     }
+    if (feature.id === 'events') {
+      navigation.navigate('EventList');
+      return;
+    }
     Alert.alert(feature.title, 'Coming soon');
   };
 

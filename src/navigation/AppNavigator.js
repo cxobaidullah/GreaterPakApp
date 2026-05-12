@@ -11,6 +11,8 @@ import NewsListScreen from '../screens/NewsListScreen';
 import NewsDetailScreen from '../screens/NewsDetailScreen';
 import PressListScreen from '../screens/PressListScreen';
 import PressDetailScreen from '../screens/PressDetailScreen';
+import EventListScreen from '../screens/EventListScreen';
+import EventDetailScreen from '../screens/EventDetailScreen';
 import colors from '../config/colors';
 
 const Stack = createNativeStackNavigator();
@@ -33,6 +35,8 @@ const AppNavigator = () => {
             <Stack.Screen name="NewsDetail" component={NewsDetailScreen} />
             <Stack.Screen name="PressList" component={PressListScreen} />
             <Stack.Screen name="PressDetail" component={PressDetailScreen} />
+            <Stack.Screen name="EventList" component={EventListScreen} />
+            <Stack.Screen name="EventDetail" component={EventDetailScreen} />
           </>
         ) : mode === 'guest' ? (
           <>
@@ -41,6 +45,8 @@ const AppNavigator = () => {
             <Stack.Screen name="NewsDetail" component={NewsDetailScreen} />
             <Stack.Screen name="PressList" component={PressListScreen} />
             <Stack.Screen name="PressDetail" component={PressDetailScreen} />
+            <Stack.Screen name="EventList" component={EventListScreen} />
+            <Stack.Screen name="EventDetail" component={EventDetailScreen} />
             <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
           </>
