@@ -104,6 +104,18 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  const goToChat = () => {
+    if (isGuest || !user) {
+      Alert.alert('Sign in required', 'Please sign in to chat with our team.');
+      return;
+    }
+    if (user.role === 'admin') {
+      navigation.navigate('AdminChatList');
+    } else {
+      navigation.navigate('Chat', { partnerName: 'Admin Support' });
+    }
+  };
+
   const handleExit = () => {
     Alert.alert(
       isGuest ? 'Exit Guest Mode' : 'Log Out',
@@ -131,9 +143,16 @@ const HomeScreen = ({ navigation }) => {
           <Text style={[styles.badgeText, styles[`badgeText_${badge.tone}`]]}>{badge.label}</Text>
         </View>
 
-        <TouchableOpacity style={styles.exitButton} onPress={handleExit}>
-          <Text style={styles.exitText}>{isGuest ? 'Exit Guest' : 'Log Out'}</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          {(!isGuest && isApprovedMember) && (
+            <TouchableOpacity style={styles.chatButton} onPress={goToChat} activeOpacity={0.7}>
+              <MaterialCommunityIcons name="chat-outline" size={20} color={theme.colors.textHigh} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.exitButton} onPress={handleExit}>
+            <Text style={styles.exitText}>{isGuest ? 'Exit Guest' : 'Log Out'}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {isPending ? (
@@ -267,8 +286,23 @@ const styles = StyleSheet.create({
   badgeText_muted: { color: theme.colors.textMedium },
   badgeText_success: { color: theme.colors.success },
   badgeText_warn: { color: '#92400E' },
-  exitButton: {
+  headerActions: {
     marginLeft: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  chatButton: {
+    width: 40,
+    height: 40,
+    borderRadius: theme.radius.button,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surface,
+  },
+  exitButton: {
     paddingVertical: 8,
     paddingHorizontal: theme.spacing.md,
     borderRadius: theme.radius.button,

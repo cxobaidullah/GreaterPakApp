@@ -9,6 +9,7 @@ import {
   updateProfile as apiUpdateProfile,
   applyForMembership as apiApplyForMembership,
 } from '../services/authService';
+import { disconnectSocket } from '../services/socket';
 
 export const AuthContext = createContext({
   user: null,
@@ -86,6 +87,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
+    disconnectSocket();
     await apiLogout();
     setUser(null);
     setMode('signedOut');

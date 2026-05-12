@@ -14,6 +14,8 @@ import PressDetailScreen from '../screens/PressDetailScreen';
 import EventListScreen from '../screens/EventListScreen';
 import EventDetailScreen from '../screens/EventDetailScreen';
 import ContentPageScreen from '../screens/ContentPageScreen';
+import ChatScreen from '../screens/ChatScreen';
+import AdminChatListScreen from '../screens/AdminChatListScreen';
 import colors from '../config/colors';
 
 const Stack = createNativeStackNavigator();
@@ -39,6 +41,8 @@ const AppNavigator = () => {
             <Stack.Screen name="EventList" component={EventListScreen} />
             <Stack.Screen name="EventDetail" component={EventDetailScreen} />
             <Stack.Screen name="ContentPage" component={ContentPageScreen} />
+            <Stack.Screen name="Chat" component={ChatScreen} />
+            <Stack.Screen name="AdminChatList" component={AdminChatListScreen} />
           </>
         ) : mode === 'guest' ? (
           <>
