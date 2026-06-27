@@ -3,40 +3,57 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, RefreshCon
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import { AuthContext } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { fetchActiveQuotes } from '../services/quoteService';
 import FeatureTile from '../components/FeatureTile';
 import MemberExclusiveModal from '../components/MemberExclusiveModal';
 import theme from '../config/theme';
 
 const FEATURES = [
-  { id: 'manifesto', title: 'Review Manifesto', icon: 'file-document-outline', tint: '#FEF3C7', memberOnly: false },
-  { id: 'vision', title: 'Vision & Mission', icon: 'eye-outline', tint: '#CFFAFE', memberOnly: false },
   { id: 'news', title: 'Read News', icon: 'newspaper-variant-outline', tint: '#E0F2FE', memberOnly: false },
+  { id: 'articles', title: 'Articles', icon: 'text-box-outline', tint: '#EAF4EE', memberOnly: false },
+  { id: 'blog', title: 'Blog', icon: 'post-outline', tint: '#FEF3C7', memberOnly: false },
   { id: 'press', title: 'Press Conferences', icon: 'microphone', tint: '#FEE2E2', memberOnly: false, accent: true },
-  { id: 'events', title: 'Explore Events', icon: 'calendar-month-outline', tint: '#DCFCE7', memberOnly: false },
+  { id: 'campaigns', title: 'Campaigns', icon: 'bullhorn-outline', tint: '#EDE9FE', memberOnly: false },
+  { id: 'programs', title: 'Programs', icon: 'briefcase-outline', tint: '#DCFCE7', memberOnly: false },
+  { id: 'infobase', title: 'Information Base', icon: 'book-open-variant', tint: '#CFFAFE', memberOnly: false },
+  { id: 'events', title: 'Explore Events', icon: 'calendar-month-outline', tint: '#FFE4E6', memberOnly: false },
+  { id: 'votes', title: 'Votes & Surveys', icon: 'poll', tint: '#F7EFD9', memberOnly: false },
+  { id: 'manifesto', title: 'Review Manifesto', icon: 'file-document-outline', tint: '#F1F5F9', memberOnly: false },
+  { id: 'vision', title: 'Vision & Mission', icon: 'eye-outline', tint: '#E0F2FE', memberOnly: false },
   { id: 'party-structure', title: 'Party Structure', icon: 'sitemap-outline', tint: '#F1F5F9', memberOnly: true },
 ];
 
 const HomeScreen = ({ navigation }) => {
   const { user, mode, signOut, refreshProfile } = useContext(AuthContext);
+  const { lang, toggleLang, loc } = useLanguage();
   const [lockedVisible, setLockedVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [todayMsg, setTodayMsg] = useState(null);
 
   const isGuest = mode === 'guest';
+
+  const loadToday = useCallback(() => {
+    fetchActiveQuotes()
+      .then((d) => setTodayMsg(d?.active?.today_message || null))
+      .catch(() => {});
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       if (mode === 'authenticated') {
         refreshProfile();
       }
-    }, [mode, refreshProfile]),
+      loadToday();
+    }, [mode, refreshProfile, loadToday]),
   );
 
   const onRefresh = useCallback(async () => {
-    if (mode !== 'authenticated') return;
     setRefreshing(true);
-    await refreshProfile();
+    loadToday();
+    if (mode === 'authenticated') await refreshProfile();
     setRefreshing(false);
-  }, [mode, refreshProfile]);
+  }, [mode, refreshProfile, loadToday]);
 
   const handleShareReferral = useCallback(async () => {
     if (!user?.referralCode) return;
@@ -67,9 +84,21 @@ const HomeScreen = ({ navigation }) => {
 
   const avatarLetter = isGuest ? 'G' : (user?.fullName?.[0] || 'S').toUpperCase();
 
+  const POST_SECTIONS = {
+    articles: { type: 'article', title: 'Articles' },
+    blog: { type: 'blog', title: 'Blog' },
+    campaigns: { type: 'campaign', title: 'Campaigns & Movements' },
+    programs: { type: 'program', title: 'Programs & Projects' },
+    infobase: { type: 'infobase', title: 'Information Base' },
+  };
+
   const handleTilePress = (feature) => {
     if (feature.memberOnly && !isApprovedMember) {
       setLockedVisible(true);
+      return;
+    }
+    if (POST_SECTIONS[feature.id]) {
+      navigation.navigate('PostList', POST_SECTIONS[feature.id]);
       return;
     }
     if (feature.id === 'news') {
@@ -82,6 +111,10 @@ const HomeScreen = ({ navigation }) => {
     }
     if (feature.id === 'events') {
       navigation.navigate('EventList');
+      return;
+    }
+    if (feature.id === 'votes') {
+      navigation.navigate('PollList');
       return;
     }
     if (feature.id === 'manifesto') {
@@ -144,6 +177,9 @@ const HomeScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.langButton} onPress={toggleLang} activeOpacity={0.7}>
+            <Text style={styles.langText}>{lang === 'en' ? 'اردو' : 'EN'}</Text>
+          </TouchableOpacity>
           {(!isGuest && isApprovedMember) && (
             <TouchableOpacity style={styles.chatButton} onPress={goToChat} activeOpacity={0.7}>
               <MaterialCommunityIcons name="chat-outline" size={20} color={theme.colors.textHigh} />
@@ -180,11 +216,7 @@ const HomeScreen = ({ navigation }) => {
 
       <ScrollView
         contentContainerStyle={styles.grid}
-        refreshControl={
-          mode === 'authenticated' ? (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
-          ) : undefined
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
       >
         <View style={styles.welcome}>
           <Text style={styles.welcomeTitle}>
@@ -196,6 +228,16 @@ const HomeScreen = ({ navigation }) => {
               : 'Explore public content. Member-only features are locked.'}
           </Text>
         </View>
+
+        {todayMsg ? (
+          <View style={styles.todayCard}>
+            <Text style={styles.todayLabel}>TODAY&apos;S MESSAGE</Text>
+            <Text style={styles.todayText}>{loc(todayMsg.text)}</Text>
+            {loc(todayMsg.attribution) ? (
+              <Text style={styles.todayAttr}>— {loc(todayMsg.attribution)}</Text>
+            ) : null}
+          </View>
+        ) : null}
 
         <View style={styles.gridRows}>
           {FEATURES.reduce((rows, feature, i) => {
@@ -301,6 +343,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.surface,
+  },
+  langButton: {
+    height: 40,
+    minWidth: 44,
+    paddingHorizontal: 12,
+    borderRadius: theme.radius.button,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.surface,
+  },
+  langText: {
+    fontSize: theme.fontSize.small,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.primary,
+  },
+  todayCard: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.radius.card,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+  },
+  todayLabel: {
+    color: theme.colors.accent,
+    fontSize: 11,
+    fontWeight: theme.fontWeight.bold,
+    letterSpacing: 1.2,
+  },
+  todayText: {
+    color: theme.colors.surface,
+    fontSize: theme.fontSize.label,
+    fontWeight: theme.fontWeight.semi,
+    lineHeight: 24,
+    marginTop: 8,
+  },
+  todayAttr: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: theme.fontSize.small,
+    marginTop: 8,
   },
   exitButton: {
     paddingVertical: 8,

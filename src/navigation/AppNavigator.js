@@ -13,6 +13,9 @@ import PressListScreen from '../screens/PressListScreen';
 import PressDetailScreen from '../screens/PressDetailScreen';
 import EventListScreen from '../screens/EventListScreen';
 import EventDetailScreen from '../screens/EventDetailScreen';
+import PostListScreen from '../screens/PostListScreen';
+import PostDetailScreen from '../screens/PostDetailScreen';
+import PollListScreen from '../screens/PollListScreen';
 import ContentPageScreen from '../screens/ContentPageScreen';
 import ChatScreen from '../screens/ChatScreen';
 import AdminChatListScreen from '../screens/AdminChatListScreen';
@@ -40,6 +43,9 @@ const AppNavigator = () => {
             <Stack.Screen name="PressDetail" component={PressDetailScreen} />
             <Stack.Screen name="EventList" component={EventListScreen} />
             <Stack.Screen name="EventDetail" component={EventDetailScreen} />
+            <Stack.Screen name="PostList" component={PostListScreen} />
+            <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+            <Stack.Screen name="PollList" component={PollListScreen} />
             <Stack.Screen name="ContentPage" component={ContentPageScreen} />
             <Stack.Screen name="Chat" component={ChatScreen} />
             <Stack.Screen name="AdminChatList" component={AdminChatListScreen} />
@@ -53,6 +59,9 @@ const AppNavigator = () => {
             <Stack.Screen name="PressDetail" component={PressDetailScreen} />
             <Stack.Screen name="EventList" component={EventListScreen} />
             <Stack.Screen name="EventDetail" component={EventDetailScreen} />
+            <Stack.Screen name="PostList" component={PostListScreen} />
+            <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+            <Stack.Screen name="PollList" component={PollListScreen} />
             <Stack.Screen name="ContentPage" component={ContentPageScreen} />
             <Stack.Screen name="RoleSelect" component={RoleSelectScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
