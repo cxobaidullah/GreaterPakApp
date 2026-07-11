@@ -11,6 +11,6 @@
 // Switch this when you deploy the new backend to production.
 import { Platform } from 'react-native';
 
-const LOCAL = Platform.OS === 'android' ? 'http://10.0.2.2:5001/api/v1' : 'http://localhost:5001/api/v1';
-
+// const LOCAL = Platform.OS === 'android' ? 'http://10.0.2.2:5001/api/v1' : 'http://localhost:5001/api/v1';
+const LOCAL =  'https://greaterpakbackend-production.up.railway.app/api/v1';
 export const API_BASE_URL = LOCAL;
